@@ -7,7 +7,6 @@
 
 
 # Preliminaries -----------------------------------------------------------
-install.packages("acs")
 
 ## see list of variable names and tables
 acs.lookup(endyear=2012, table.number="B27010", span=1)
