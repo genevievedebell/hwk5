@@ -9,7 +9,7 @@
 
 
 # Preliminaries -----------------------------------------------------------
-kff.dat <- read_csv('/data/medicaid/KFF_medicaid_expansion_2019.csv')
+kff.dat <- read_csv('data/input/KFF_medicaid_expansion_2019.csv')
 
 # Clean KFF data -------------------------------------------------------
 
@@ -24,4 +24,4 @@ kff.final <- kff.final %>%
   mutate(date_adopted = mdy(splitvar$date)) %>%
   select(State, expanded, date_adopted)
 
-write_rds(kff.final,'medicaid-kff.rds')
+write_rds(kff.final,'data/output/medicaid-kff.rds')

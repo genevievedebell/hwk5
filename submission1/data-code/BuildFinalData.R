@@ -10,15 +10,19 @@
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, readr, readxl,
                scales, gganimate, cobalt, stargazer, haven, ggthemes,
-             tidyr, here)
+             tidyr, here, acs)
 
-install.packages("devtools")  # if not installed
-devtools::install_github("cran/ivpack")
-devtools::install_github("cran/acs")
-source('Medicaid.R')
-source('ACS.R')
+install.packages("tidycensus")
+library(tidycensus)
 
-R.version.string
+
+test_data <- get_acs(
+  geography = "state",
+  variables = "B19013_001",
+  year = 2022
+)
+
+head(test_data)
 
 # Tidy --------------------------------------------------------------------
 final.data <- final.insurance %>%
@@ -27,4 +31,4 @@ final.data <- final.insurance %>%
          expand = (year>=expand_year & !is.na(expand_year))) %>%
   rename(expand_ever=expanded)
 
-write_rds(final.data,'acs_medicaid.rds')
+write_rds(final.data,'data/output/acs_medicaid.rds')
