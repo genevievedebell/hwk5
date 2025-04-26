@@ -32,3 +32,6 @@ final.data <- final.insurance %>%
   rename(expand_ever=expanded)
 
 write_rds(final.data,'data/output/acs_medicaid.rds')
+
+colnames(final.insurance)
+names(kff.final)
