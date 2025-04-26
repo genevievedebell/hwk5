@@ -23,7 +23,7 @@ test_data <- get_acs(
 )
 
 head(test_data)
-
+colnames(final.insurance)
 # Tidy --------------------------------------------------------------------
 final.data <- final.insurance %>%
   left_join(kff.final, by="State") %>%
@@ -33,5 +33,3 @@ final.data <- final.insurance %>%
 
 write_rds(final.data,'data/output/acs_medicaid.rds')
 
-colnames(final.insurance)
-names(kff.final)

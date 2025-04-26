@@ -10,7 +10,9 @@
 
 # Preliminaries -----------------------------------------------------------
 kff.dat <- read_csv('data/input/KFF_medicaid_expansion_2019.csv')
-
+if (".State" %in% names(kff.dat)) {
+  kff.dat <- kff.dat %>% rename(State = .State)
+}
 # Clean KFF data -------------------------------------------------------
 
 kff.final <- kff.dat %>%
@@ -23,7 +25,7 @@ kff.final$splitvar <- kff.final %>% select(Description) %>% as.data.frame() %>%
 kff.final <- kff.final %>%
   mutate(date_adopted = mdy(splitvar$date)) %>%
   select(State, expanded, date_adopted)
-colnames(kff.dat)
+
 write_tsv(kff.final,'data/output/medicaid_expansion.txt')
 
-names(kff.final)
+
