@@ -160,26 +160,19 @@ kable(dd_2x2_clean,
 6. Estimate the effect of Medicaid expansion on the uninsurance rate using a standard DD regression estimator, again focusing only on states that expanded in 2014 versus those that never expanded.
 ```{r, warning=FALSE}
 #| echo: false
-library(fixest)
-library(dplyr)
-
-# Create treatment and post indicators
-final.data.exp <- final.data.exp %>%
-  mutate(
-    treat = ifelse(expand_group == "Expanded in 2014", 1, 0),
-    post = ifelse(year >= 2014, 1, 0),
-    uninsured_rate = uninsured / adult_pop
-  )
-
-  # DiD regression without fixed effects
-did_model <- feols(uninsured_rate ~ treat * post, data = final.data.exp)
 library(modelsummary)
+
+# Use the base LaTeX backend — avoids tabularray entirely
 modelsummary(
   did_model,
   output = "latex",
   title = "Table 2: DD Estimates for Medicaid Expansion",
   stars = TRUE,
-  statistic = "({std.error})"
+  statistic = "({std.error})",
+  fmt = 3,
+  gof_omit = "IC|LogLik|RMSE|Std.Errors",
+  escape = FALSE,
+  latex_engine = "latex"  # 👈 this avoids kableExtra and tabularray
 )
 ```
 
@@ -249,7 +242,7 @@ iplot(mod.twfe,
       ylab = "Effect on % Uninsured")
 ```
 
-# 10. Repeat part 9 but again include states that expanded after 2014. Note: this is tricky…you need to put all states onto “event time” to create this graph.
+10. Repeat part 9 but again include states that expanded after 2014. Note: this is tricky…you need to put all states onto “event time” to create this graph.
 ```{r, warning=FALSE}
 #| echo: false
 reg.data2 <- final.data %>%
