@@ -1,35 +1,5 @@
----
-title: "Homework 5"
-subtitle: "Research Methods, Spring 2025"
-author: "Answer Key"
-format:
-  pdf:
-    output-file: "debell-g-hwk5-2"
-    output-ext:  "pdf"
-    header-includes:
-      - \usepackage{float}
-      - \floatplacement{table}{H}
----
+# 1. Plot the share of the adult population with direct purchase health insurance over time.
 
-```{r}
-#| include: false
-
-if (!require("pacman")) install.packages("pacman")
-pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, stringr, readxl, 
-               data.table, gdata, scales, kableExtra, modelsummary, fixest)
-```
-
-
-```{r}
-#| include: false
-#| eval: true
-setwd("/Users/genevievedebell/Documents/GitHub/hwk5")
-load("submission2/analysis/Hwk5_workspace.Rdata")
-```
-
-1. Plot the share of the adult population with direct purchase health insurance over time.
-```{r, warning=FALSE}
-#| echo: false
 library(ggplot2)
 library(dplyr)
 
@@ -51,15 +21,13 @@ ggplot(plot_data, aes(x = year, y = direct_share)) +
        x = "Year",
        y = "Direct Purchase Insurance Share") +
   theme_minimal()
-```
 
-2. Discuss the reduction in direct purchase health insurance in later years. Can you list a couple of policies that might have affected the success of the direct purchase insurance market?
+#2. Discuss the reduction in direct purchase health insurance in later years. Can you list a couple of policies that might have affected the success of the direct purchase insurance market?
 
-Since 2016, the share of adults with direct purchase insurance has decreased. The Tax Cuts and Jobs Act of 2017 eliminated the penalty for not having insurance starting in 2019. Without this mandate, fewer healthy individuals opted into coverage because there was no penalty. 
+## Since 2016, the share of adults with direct purchase insurance has decreased. The Tax Cuts and Jobs Act of 2017 eliminated the penalty for not having insurance starting in 2019. Without this mandate, fewer healthy individuals opted into coverage because there was no penalty. 
 
-3. Plot the share of the adult population with Medicaid over time.
-```{r,warning=FALSE}
-#| echo: false
+# 3. Plot the share of the adult population with Medicaid over time.
+
 # Calculate Medicaid share nationally by year
 medicaid_plot_data <- final.insurance %>%
   group_by(year) %>%
@@ -78,11 +46,9 @@ ggplot(medicaid_plot_data, aes(x = year, y = medicaid_share)) +
        x = "Year",
        y = "Medicaid Coverage Share") +
   theme_minimal()
-```
 
-4. Plot the share of uninsured over time, separately by states that expanded Medicaid in 2014 versus those that did not. Drop all states that expanded after 2014.
-```{r, warning=FALSE}
-#| echo: false
+# 4. Plot the share of uninsured over time, separately by states that expanded Medicaid in 2014 versus those that did not. Drop all states that expanded after 2014.
+
 ### states that expanded in 2014
 expanded <- final.data %>%
   group_by(State) %>%
@@ -124,49 +90,49 @@ uninsured.plot <- ggplot(uninsured.share, aes(x = year, y = share_uninsured, col
   theme_minimal()
 
 print(uninsured.plot)
-```
 
-5. Calculate the average percent of uninsured individuals in 2012 and 2015, separately for expansion and non-expansion states. Present your results in a basic 2x2 DD table.
-```{r, warning=FALSE}
-#| echo: false
+# 5. Calculate the average percent of uninsured individuals in 2012 and 2015, separately for expansion and non-expansion states. Present your results in a basic 2x2 DD table.
+
 library(dplyr)
 library(tidyr)
 
-
-# Start from final.data.exp and compute only what's needed
-dd_2x2_clean <- final.data.exp %>%
+dd_2x2 <- final.data.exp %>%
   filter(year %in% c(2012, 2015)) %>%
   group_by(expand_group, year) %>%
   summarise(
-    avg_uninsured_rate = sum(uninsured, na.rm = TRUE) / sum(adult_pop, na.rm = TRUE),
+    total_uninsured = sum(uninsured, na.rm = TRUE),
+    total_adult_pop = sum(adult_pop, na.rm = TRUE),
+    avg_uninsured_rate = total_uninsured / total_adult_pop,
     .groups = "drop"
   ) %>%
   pivot_wider(
     names_from = year,
     values_from = avg_uninsured_rate,
-    names_prefix = "Year_"
-  ) %>%
-  rename(Group = expand_group, Pre = Year_2012, Post = Year_2015)
+    names_prefix = "year_"
+  )
+dd_2x2_clean <- dd_2x2 %>%
+  rename(
+    Group = expand_group,
+    Pre = year_2012,
+    Post = year_2015
+  )
 
-# Print the final 2x2 table
+# Print formatted LaTeX-style table
 kable(dd_2x2_clean,
-      caption = "Table 1: Difference-in-Differences Table of Average Uninsured Rate",
+      caption = "Table 1: DD Table for Medicaid Expansion",
       digits = 2,
       format = "latex",
       booktabs = TRUE)
 
-```
+# View final DiD table
+print(dd_2x2)
 
-6. Estimate the effect of Medicaid expansion on the uninsurance rate using a standard DD regression estimator, again focusing only on states that expanded in 2014 versus those that never expanded.
-```{r, warning=FALSE}
-#| echo: false
+# 6. Estimate the effect of Medicaid expansion on the uninsurance rate using a standard DD regression estimator, again focusing only on states that expanded in 2014 versus those that never expanded.
+
 library(fixest)
-library(modelsummary)
+library(dplyr)
 
-# Force all LaTeX tables to use simple latex engine
-options(modelsummary_latex_engine = "latex")
-
-# Recreate needed variables
+# Create treatment and post indicators
 final.data.exp <- final.data.exp %>%
   mutate(
     treat = ifelse(expand_group == "Expanded in 2014", 1, 0),
@@ -174,10 +140,10 @@ final.data.exp <- final.data.exp %>%
     uninsured_rate = uninsured / adult_pop
   )
 
-# Run the DiD model
+  # DiD regression without fixed effects
 did_model <- feols(uninsured_rate ~ treat * post, data = final.data.exp)
 
-# Render the table
+library(modelsummary)
 modelsummary(
   did_model,
   output = "latex",
@@ -185,11 +151,13 @@ modelsummary(
   stars = TRUE,
   statistic = "({std.error})"
 )
-```
+# Print the model summary
+print(did_model)
+# View results
+summary(did_model)
 
-7. Include state and year fixed effects in your estimates. Try using the lfe or fixest package to estimate this instead of directly including the fixed effects.
-```{r, warning=FALSE}
-#| echo: false
+# 7. Include state and year fixed effects in your estimates. Try using the lfe or fixest package to estimate this instead of directly including the fixed effects.
+
 library(fixest)
 
 # Estimate DiD model with state and year fixed effects
@@ -200,12 +168,8 @@ did_fe_model <- feols(
 
 # View the summary
 summary(did_fe_model)
-```
 
-8. Repeat the analysis in question 7 but include all states (even those that expanded after 2014). Are your results different? If so, why?
-
-```{r, warning=FALSE}
-#| echo: false
+# 8. Repeat the analysis in question 7 but include all states (even those that expanded after 2014). Are your results different? If so, why?
 library(fixest)
 library(dplyr)
 
@@ -228,11 +192,10 @@ fe.est2 <- feols(
 
 # Step 3: View results
 summary(fe.est2)
-```
 
-9. Provide an “event study” graph showing the effects of Medicaid expansion in each year. Use the specification that includes state and year fixed effects, limited to states that expanded in 2014 or never expanded.
-```{r, warning=FALSE}
-#| echo: false
+
+# 9. Provide an “event study” graph showing the effects of Medicaid expansion in each year. Use the specification that includes state and year fixed effects, limited to states that expanded in 2014 or never expanded.
+
 reg.data <- final.data %>%
   filter(expand_year == 2014 | is.na(expand_year)) %>%
   mutate(
@@ -251,11 +214,9 @@ iplot(mod.twfe,
       main = "Event Study: Effect of Medicaid Expansion on Uninsurance",
       xlab = "Year (Reference = 2013)",
       ylab = "Effect on % Uninsured")
-```
 
-10. Repeat part 9 but again include states that expanded after 2014. Note: this is tricky…you need to put all states onto “event time” to create this graph.
-```{r, warning=FALSE}
-#| echo: false
+# 10. Repeat part 9 but again include states that expanded after 2014. Note: this is tricky…you need to put all states onto “event time” to create this graph.
+
 reg.data2 <- final.data %>%
   filter(!is.na(year)) %>%
   mutate(
@@ -277,4 +238,6 @@ iplot(mod.twfe2,
       main = "Event Study: Medicaid Expansion (All States, Event Time)",
       xlab = "Years Since Expansion",
       ylab = "Effect on % Uninsured")
-```
+
+save.image("submission3/analysis/Hwk5_workspace.Rdata")
+
